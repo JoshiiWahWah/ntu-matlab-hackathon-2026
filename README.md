@@ -140,7 +140,9 @@ expected. That is **5.3% of all energy** used by the year-6 buildings, concentra
 | ![History vs cold start](figures/08_history_vs_coldstart.png) | ![Predicted vs actual](figures/07_pred_vs_actual.png) |
 | ![Partial dependence](figures/11_partial_dependence.png) | ![Retrofit shortlist](figures/12_retrofit_shortlist.png) |
 
-All 12 figures are in [`figures/`](figures/). The demo script is [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+All 12 figures are in [`figures/`](figures/).
+
+**Demo:** slide deck [`docs/demo_slides.pdf`](docs/demo_slides.pdf) ([`.pptx`](docs/demo_slides.pptx), the script is in the speaker notes) · script [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md)
 
 ## How to run
 
