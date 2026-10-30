@@ -3,7 +3,7 @@ function X = treeInputs(T, vars)
 %   Without surrogate splits, a MATLAB tree stops an observation at the
 %   first node that splits on a predictor it is missing, and predicts that
 %   node's mean. With energy_star_rating (35% missing) and the history
-%   features (~60% missing) among the strongest predictors, those buildings
+%   features (missing for about three-quarters of rows) among the strongest predictors, those buildings
 %   would barely be learned. Encoding NaN as an out-of-range sentinel lets
 %   each split decide which side missing values belong on (the *_missing and
 %   has_history flags are kept as explicit predictors too).
