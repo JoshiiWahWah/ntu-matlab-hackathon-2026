@@ -1,0 +1,8 @@
+decision,evidence,rubric
+"year_built <= 0 set to missing","7 rows had year_built <= 0",Data Mastery: cleaning
+"Added missingness indicators (energy_star_rating, year_built)","energy_star_rating missing: 35.3% train / 23.2% test",Data Mastery: processing
+"Dropped wind/fog columns","missing 56.0% in train vs 89.8% in test (distribution shift)",Data Mastery: cleaning
+"Pooled facility types with < 50 training rows into Other_rare","14 of 60 types pooled (330 rows)",Data Mastery: processing
+"Kept extreme site_eui values (no clipping of the target)","max 997.9, 99.9th pct 700.2 kBtu/ft2/yr",Data Mastery: cleaning
+"Report a 'test-like' validation score on non-State_6 buildings","State_6 is 67.1% of train but 0.0% of test",Data Mastery: separating
+"Reconstructed building id from static attributes; added causal lag features","63907 buildings, 22.0% seen in >1 year; 22.1% of test rows have past energy data",Use of ML: features
