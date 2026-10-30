@@ -30,20 +30,20 @@ One command runs everything: `main` (or `main(true)` for a 1–2 minute smoke te
 All decisions and their evidence are written by `cleanData.m` to
 [`results/decisions.csv`](results/decisions.csv).
 
-1. **Distribution shift between train and test.** State_6 makes up about 67% of training
+1. **Distribution shift between train and test.** State_6 makes up 67.1% of training
    rows but **none of the test rows**. So we report a second, **test-like** validation score
    on non-State_6 buildings (fig. 2).
-2. **Wind and fog columns are unreliable.** They are about 54% missing in train and about
-   88% missing in test. A model would learn a missingness pattern that doesn't exist at
+2. **Wind and fog columns are unreliable.** They are 56.0% missing in train and
+   89.8% missing in test. A model would learn a missingness pattern that doesn't exist at
    test time, so we drop them.
-3. **`year_built = 0`** is not a real year. We set it to missing.
-4. **ENERGY STAR rating is ~35% missing.** We add an `esr_missing` flag before any imputation.
+3. **`year_built = 0`** (7 rows) is not a real year. We set it to missing.
+4. **ENERGY STAR rating is 35.3% missing in train (23.2% in test).** We add an `esr_missing` flag before any imputation.
    The rating is itself derived from measured energy use, so we report models with and without it.
-5. **Rare facility types** (fewer than 50 training rows) are pooled into `Other_rare`.
+5. **Rare facility types** (fewer than 50 training rows: 14 of 60 types, 330 rows) are pooled into `Other_rare`.
 6. **The target is right-skewed** (fig. 1), so we train both raw-scale and log-scale models
    and blend them. Extreme EUIs (labs, data centres) are kept because the metric includes them.
 7. **The same buildings recur across years**, but no building id is given. We reconstruct
-   one from static attributes (state, class, type, floor area, year built, elevation).
+   one (63,907 buildings; 22.1% of test rows have past energy data) from static attributes (state, class, type, floor area, year built, elevation).
    The building's **previous-year EUI** is then a feature. It is computed strictly from
    earlier years, and a unit test (`tests/PipelineTest.m`) proves that.
 
@@ -65,8 +65,54 @@ Partial-dependence plots (fig. 11) confirm the model learned physically sensible
 
 Validation = Year_Factor 6, trained on years 1–5. RMSE in kBtu/ft²/yr (official WiDS metric).
 
-<!-- RESULTS_TABLE: filled from results/results.csv after the MATLAB run -->
-_Table generated from `results/results.csv` after running `main`._
+| # | Model (MATLAB function) | Features | Target | RMSE | Test-like RMSE¹ | Buildings with history | New buildings |
+|---|---|---|---|---|---|---|---|
+| 0 | Naive median | – | raw | 57.07 | 63.92 | 49.42 | 61.24 |
+| 1 | Linear regression (`fitlm`) | physics-linear | log | 46.19 | 50.54 | 38.60 | 50.23 |
+| 2 | Regression tree (`fitrtree`) | full | raw | 40.89 | 43.81 | 26.64 | 47.47 |
+| 3 | Bagged trees (`fitrensemble` Bag) | full | raw | 39.17 | 40.57 | 23.19 | 46.23 |
+| 4 | Boosted trees (`fitrensemble` LSBoost) | cold start² | raw | 48.67 | 44.82 | 33.61 | 55.84 |
+| 5 | Boosted trees | + ENERGY STAR | raw | 42.49 | 38.21 | 25.75 | 49.96 |
+| 6 | Boosted trees | + building history | raw | 40.81 | **36.97** | 21.65 | 48.87 |
+| 7 | Boosted trees | + building history | log | 38.23 | 39.61 | 20.97 | 45.59 |
+| 8 | Neural network (`fitrnet`) | full | log | 59.55 | 60.73 | 44.99 | 66.83 |
+| **9** | **Blend 0.3·raw + 0.7·log (6 + 7)** | full | blend | **37.56** | 38.06 | **20.32** | **44.88** |
+
+¹ Non-State_6 buildings. State_6 is absent from the test set, so this subset resembles it most.
+² No ENERGY STAR rating and no energy history: the honest model for a brand-new building.
+
+**Final model (submitted):** blend 9, retrained on all six labelled years.
+RMSE **37.56** vs 57.07 naive (**−34.2%**), MAE 17.32, R² 0.566. The blend weight was
+picked on the validation year.
+
+**What the ladder taught us**
+- **Non-linearity matters.** One tree beats linear regression (40.9 vs 46.2), because
+  energy use depends on interactions such as facility type × climate.
+- **The ENERGY STAR rating helps** (48.7 → 42.5). It is derived from measured energy,
+  though, so we keep a cold-start model for new buildings.
+- **A building's own history is the strongest signal.** Buildings with past data drop to
+  RMSE 20.3, against 44.9 for buildings without.
+- **Log and raw targets are complementary.** Log is better overall, raw is better on
+  test-like buildings, and blending gets the best of both.
+- **The neural net underperformed** (59.5) on this tabular data with heavy missingness,
+  even with standardisation and regularisation. We report it rather than hide it.
+- **A MATLAB-specific lesson.** Without surrogate splits, a MATLAB tree stops rows that
+  are missing the split variable at that node. Our first full run therefore barely learned
+  from buildings without a rating or history (blend RMSE 46.8). Encoding missing values as
+  an out-of-range sentinel (`src/treeInputs.m`) fixed it: 46.8 → 37.6.
+
+**Why validation design matters.** Same model, same features:
+
+| Validation scheme | RMSE |
+|---|---|
+| Random 80/20 split (all years) | 37.95 |
+| Temporal: train years 1–5, test year 6 | 42.49 |
+
+The random split looks about 12% better because other years of the same building leak into
+training. We report the temporal number.
+
+**What drives energy use** (boosted-tree importance): facility type, ENERGY STAR rating,
+previous-year EUI, floor area, mean past EUI, year built, state.
 
 ## Retrofit shortlist (the "so what")
 
@@ -74,7 +120,10 @@ The **cold-start** model (no rating, no history) is trained on earlier years and
 what a typical building of the same type, size, age and climate uses. A building's excess
 EUI is its actual EUI minus that prediction. Candidates are the top 5% by excess within
 each facility type, ranked by **excess energy = excess EUI × floor area**. That ranking puts
-the biggest absolute savings first. See [`results/retrofit_top20.csv`](results/retrofit_top20.csv) and fig. 12.
+the biggest absolute savings first.
+
+**Result:** **1,123 buildings** in year 6 together use **1.55 × 10¹⁰ kBtu/yr more** than
+expected. That is **5.3% of all energy** used by the year-6 buildings, concentrated in about 5% of them. See [`results/retrofit_top20.csv`](results/retrofit_top20.csv) and fig. 12.
 
 ## How to run
 
