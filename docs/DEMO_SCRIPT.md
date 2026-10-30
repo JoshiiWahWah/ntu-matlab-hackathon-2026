@@ -41,13 +41,13 @@ energy use, and past use predicts future use. Honest caveat: once the model know
 state, the degree-day features add little, because weather is recorded per state and
 year. Then we turn predictions into action. A cold-start model predicts what a typical building of the
 same type, size, age and climate *should* use. Buildings far above that are retrofit
-candidates: **1,123 buildings, 5% of the stock, wasting 1.55×10¹⁰ kBtu a year, 5.3%
-of all energy used**. Ranked by absolute excess energy, so an organisation knows where a
+candidates: **1,123 buildings, 5% of the stock, using 1.55×10¹⁰ kBtu a year more than
+expected, 5.3% of all energy used**. Ranked by absolute excess energy, so an organisation knows where a
 retrofit pays off most."
 
 **4:20–4:50 — Engineering quality**
-"Everything runs with one command, `main`, from raw CSV to submission, figures and
-report. The code is modular functions with argument validation, unit tests in
+"Everything runs with one command, `main`, from raw CSV to submission and
+figures. The code is modular functions with argument validation, unit tests in
 `matlab.unittest`, a validated submission file, and every number in our README is printed
 by MATLAB."
 
