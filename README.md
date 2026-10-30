@@ -59,7 +59,13 @@ with **cooling degree days**. We add:
 - log floor area
 - relative building age
 
-Partial-dependence plots (fig. 11) confirm the model learned physically sensible responses.
+In the raw data (fig. 5), median EUI is about 36–53 kBtu/ft²/yr below ~3,800 heating degree
+days and about 68–82 above 4,000. Partial dependence (fig. 11) shows clean, monotone
+responses to ENERGY STAR rating (higher score → lower EUI) and previous-year EUI. The
+model's own HDD/CDD curves are nearly flat (±0.1 kBtu/ft²/yr). Weather is recorded per
+state and year, so once State_Factor, facility type and history are known, the degree-day
+features add little on top. We report this rather than claim a climate effect the model
+doesn't use.
 
 ## Model ladder (Use of ML)
 

@@ -10,8 +10,8 @@ we built in MATLAB."
 
 **0:30–1:10 — Physics framing** (fig. 05 EUI vs HDD)
 "A building's heating energy follows an energy balance: Q ≈ UA·ΔT summed over the year.
-So we engineered degree-day and seasonal temperature features. This plot shows median
-energy use climbing with heating degree days, straight from the data."
+So we engineered degree-day and seasonal temperature features. In the raw data, median
+energy use is roughly 36–53 in milder climates and 68–82 in colder ones."
 
 **1:10–2:10 — Data mastery** (fig. 02 state shift, results/decisions.csv)
 "Before modelling we looked hard at the data. Three findings drove our design:
@@ -36,8 +36,10 @@ missing a split variable. Our first run barely learned from buildings without a 
 Encoding missing values explicitly took us from 46.8 to 37.6."
 
 **3:20–4:20 — Impact: retrofit shortlist** (fig. 11, fig. 12)
-"Partial dependence shows the model learned physically sensible responses. Then we
-turn predictions into action. A cold-start model predicts what a typical building of the
+"Partial dependence shows clean responses: a higher ENERGY STAR score means lower
+energy use, and past use predicts future use. Honest caveat: once the model knows the
+state, the degree-day features add little, because weather is recorded per state and
+year. Then we turn predictions into action. A cold-start model predicts what a typical building of the
 same type, size, age and climate *should* use. Buildings far above that are retrofit
 candidates: **1,123 buildings, 5% of the stock, wasting 1.55×10¹⁰ kBtu a year, 5.3%
 of all energy used**. Ranked by absolute excess energy, so an organisation knows where a
