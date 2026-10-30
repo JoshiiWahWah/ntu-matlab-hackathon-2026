@@ -49,12 +49,12 @@ cmp = compareValidation(full, ladder.rmse(ladder.features == "withESR"), feature
 %% 6. Final model: retrain the best pipeline on ALL labelled years, predict test
 fprintf("\nFinal model: retraining on all labelled years (blend weight %.1f raw / %.1f log)\n", ...
     best.blendWeight, 1 - best.blendWeight);
-Xfull = full(:, featureSets.full);
-Xtest = tst(:, featureSets.full);
+Xfull = treeInputs(full, featureSets.full);
+Xtest = treeInputs(tst, featureSets.full);
 finalRaw = fitBoost(Xfull, full.site_eui, cfg);
 finalLog = fitBoost(Xfull, log1p(full.site_eui), cfg);
 testPred = best.blendWeight * predict(finalRaw, Xtest) + ...
-    (1 - best.blendWeight) * expm1(predict(finalLog, Xtest));
+    (1 - best.blendWeight) * min(expm1(predict(finalLog, Xtest)), max(full.site_eui));
 nFloored = nnz(testPred < cfg.predFloor);
 testPred = max(testPred, cfg.predFloor);
 fprintf("  %d test predictions raised to the physical floor of %g\n", nFloored, cfg.predFloor);

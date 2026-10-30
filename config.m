@@ -39,7 +39,7 @@ cfg.bag.minLeaf       = 10;
 cfg.tree.minLeaf      = 20;
 
 cfg.nnet.layers       = [64 32];
-cfg.nnet.lambda       = 1e-4;
+cfg.nnet.lambda       = 1e-3;
 cfg.nnet.iterations   = 300;
 
 % Physical floor for predictions (EUI cannot be negative; min observed ~1).

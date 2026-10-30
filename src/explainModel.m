@@ -21,7 +21,9 @@ pdVars = pdVars(ismember(pdVars, X.Properties.VariableNames));
 pd = struct('var', {}, 'grid', {}, 'response', {});
 for k = 1:numel(pdVars)
     v = pdVars{k};
-    gridVals = linspace(prctile(X.(v), 2), prctile(X.(v), 98), 25)';
+    x = X.(v);
+    x = x(x ~= missingSentinel());     % grid over real values only
+    gridVals = linspace(prctile(x, 2), prctile(x, 98), 25)';
     resp = zeros(size(gridVals));
     Xg = Xs;
     for g = 1:numel(gridVals)

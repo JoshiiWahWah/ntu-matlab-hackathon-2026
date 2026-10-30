@@ -13,8 +13,8 @@ arguments
 end
 
 part = cvpartition(height(full), 'HoldOut', 0.2);
-Xtr  = full(training(part), featureSets.withESR);
-Xte  = full(test(part), featureSets.withESR);
+Xtr  = treeInputs(full(training(part), :), featureSets.withESR);
+Xte  = treeInputs(full(test(part), :), featureSets.withESR);
 mdl  = fitBoost(Xtr, full.site_eui(training(part)), cfg);
 m    = regMetrics(full.site_eui(test(part)), predict(mdl, Xte));
 

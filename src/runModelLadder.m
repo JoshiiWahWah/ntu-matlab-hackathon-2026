@@ -45,44 +45,44 @@ linVars = {'State_Factor', 'building_class', 'facility_type', 'log_floor_area', 
 [Xl, Xlv] = imputeMedian(trn(:, linVars), val(:, linVars));
 Xl.logEUI = log1p(y);
 lin = fitlm(Xl, 'linear', 'ResponseVar', 'logEUI');
-preds.linear = max(expm1(predict(lin, Xlv)), cfg.predFloor);
+preds.linear = capLog(predict(lin, Xlv), y, cfg);
 ladder = addRow(ladder, "1 Linear regression (fitlm)", "physics-linear", "log", yVal, preds.linear, masks, toc(t));
 
 % 2) Single regression tree
 t = tic;
-tree = fitrtree(trn(:, featureSets.full), y, 'MinLeafSize', cfg.tree.minLeaf);
-preds.tree = predict(tree, val(:, featureSets.full));
+tree = fitrtree(treeInputs(trn, featureSets.full), y, 'MinLeafSize', cfg.tree.minLeaf);
+preds.tree = predict(tree, treeInputs(val, featureSets.full));
 ladder = addRow(ladder, "2 Regression tree (fitrtree)", "full", "raw", yVal, preds.tree, masks, toc(t));
 
 % 3) Bagged trees (random-forest style)
 t = tic;
-bag = fitrensemble(trn(:, featureSets.full), y, 'Method', 'Bag', ...
+bag = fitrensemble(treeInputs(trn, featureSets.full), y, 'Method', 'Bag', ...
     'NumLearningCycles', cfg.bag.cycles, 'Learners', templateTree('MinLeafSize', cfg.bag.minLeaf));
-preds.bag = predict(bag, val(:, featureSets.full));
+preds.bag = predict(bag, treeInputs(val, featureSets.full));
 ladder = addRow(ladder, "3 Bagged trees (fitrensemble Bag)", "full", "raw", yVal, preds.bag, masks, toc(t));
 
 % 4) Boosted trees, cold-start features
 t = tic;
-best.coldStart = fitBoost(trn(:, featureSets.coldStart), y, cfg);
-preds.coldStart = predict(best.coldStart, val(:, featureSets.coldStart));
+best.coldStart = fitBoost(treeInputs(trn, featureSets.coldStart), y, cfg);
+preds.coldStart = predict(best.coldStart, treeInputs(val, featureSets.coldStart));
 ladder = addRow(ladder, "4 Boosted trees (LSBoost)", "coldStart", "raw", yVal, preds.coldStart, masks, toc(t));
 
 % 5) Boosted trees + ENERGY STAR rating
 t = tic;
-mdl = fitBoost(trn(:, featureSets.withESR), y, cfg);
-preds.withESR = predict(mdl, val(:, featureSets.withESR));
+mdl = fitBoost(treeInputs(trn, featureSets.withESR), y, cfg);
+preds.withESR = predict(mdl, treeInputs(val, featureSets.withESR));
 ladder = addRow(ladder, "5 Boosted trees (LSBoost)", "withESR", "raw", yVal, preds.withESR, masks, toc(t));
 
 % 6) Boosted trees + building history
 t = tic;
-best.fullRaw = fitBoost(trn(:, featureSets.full), y, cfg);
-preds.fullRaw = predict(best.fullRaw, val(:, featureSets.full));
+best.fullRaw = fitBoost(treeInputs(trn, featureSets.full), y, cfg);
+preds.fullRaw = predict(best.fullRaw, treeInputs(val, featureSets.full));
 ladder = addRow(ladder, "6 Boosted trees (LSBoost)", "full", "raw", yVal, preds.fullRaw, masks, toc(t));
 
 % 7) Boosted trees + history, log target
 t = tic;
-mdl = fitBoost(trn(:, featureSets.full), log1p(y), cfg);
-preds.fullLog = max(expm1(predict(mdl, val(:, featureSets.full))), cfg.predFloor);
+mdl = fitBoost(treeInputs(trn, featureSets.full), log1p(y), cfg);
+preds.fullLog = capLog(predict(mdl, treeInputs(val, featureSets.full)), y, cfg);
 ladder = addRow(ladder, "7 Boosted trees (LSBoost)", "full", "log", yVal, preds.fullLog, masks, toc(t));
 
 % 8) Neural network (standardised, median-imputed inputs, log target)
@@ -90,7 +90,7 @@ t = tic;
 [Xn, Xnv] = imputeMedian(trn(:, featureSets.full), val(:, featureSets.full));
 net = fitrnet(Xn, log1p(y), 'Standardize', true, 'LayerSizes', cfg.nnet.layers, ...
     'Lambda', cfg.nnet.lambda, 'IterationLimit', cfg.nnet.iterations);
-preds.nnet = max(expm1(predict(net, Xnv)), cfg.predFloor);
+preds.nnet = capLog(predict(net, Xnv), y, cfg);
 ladder = addRow(ladder, "8 Neural network (fitrnet)", "full", "log", yVal, preds.nnet, masks, toc(t));
 
 % 9) Blend raw- and log-target boosted models; weight chosen on validation
@@ -104,6 +104,12 @@ ladder = addRow(ladder, sprintf("9 Blend %.1f*raw + %.1f*log (6+7)", best.blendW
 
 fprintf("\nModel ladder (validation = Year_Factor %d):\n", cfg.valYear);
 disp(ladder(:, {'model', 'features', 'target', 'rmse', 'rmse_testlike', 'rmse_history', 'rmse_coldstart'}));
+end
+
+function p = capLog(logPred, yTrain, cfg)
+% Back-transform a log1p prediction, clamped to the observed EUI range: a
+% small extrapolation error on the log scale becomes a huge one after expm1.
+p = min(max(expm1(logPred), cfg.predFloor), max(yTrain));
 end
 
 function ladder = addRow(ladder, name, features, target, y, p, masks, seconds)
