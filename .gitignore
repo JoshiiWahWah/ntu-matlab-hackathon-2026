@@ -1,0 +1,6 @@
+data/*.csv
+!data/sample_solution.csv
+results/models.mat
+*.asv
+*.mlx.autosave
+slprj/
