@@ -125,6 +125,17 @@ the biggest absolute savings first.
 **Result:** **1,123 buildings** in year 6 together use **1.55 × 10¹⁰ kBtu/yr more** than
 expected. That is **5.3% of all energy** used by the year-6 buildings, concentrated in about 5% of them. See [`results/retrofit_top20.csv`](results/retrofit_top20.csv) and fig. 12.
 
+## Key figures
+
+| | |
+|---|---|
+| ![State shift](figures/02_state_shift.png) | ![EUI vs HDD](figures/05_eui_vs_hdd.png) |
+| ![Model ladder](figures/06_model_ladder.png) | ![Validation schemes](figures/09_validation_schemes.png) |
+| ![History vs cold start](figures/08_history_vs_coldstart.png) | ![Predicted vs actual](figures/07_pred_vs_actual.png) |
+| ![Partial dependence](figures/11_partial_dependence.png) | ![Retrofit shortlist](figures/12_retrofit_shortlist.png) |
+
+All 12 figures are in [`figures/`](figures/). The demo script is [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+
 ## How to run
 
 1. Put `train.csv` and `test.csv` in `data/` (see [`data/README.md`](data/README.md)).
